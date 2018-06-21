@@ -1,23 +1,8 @@
 defmodule Jack.VM.ArithmeticCommand do
   defstruct name: nil, class: nil, line: nil
-  import Jack.VM.MemoryCommand
+  import Jack.VM.ASM
 
-  @commands_binary [:add, :sub, :and, :or]
-  @commands_unary  [:neg, :not]
-  @commands_comp   [:eq, :gt, :lt]
-
-
-  def pop(num) do
-    [pop_temp(num)]
-  end
-
-
-  def push(stream, num) do
-    stream ++ [push_temp(num)]
-  end
-
-
-  def op(stream, cmd, _) when cmd in @commands_binary do
+  def binary_op(stream, cmd, _) do
     asm_op = case cmd do
       :add -> "+"
       :sub -> "-"
@@ -43,7 +28,7 @@ defmodule Jack.VM.ArithmeticCommand do
   end
 
 
-  def op(stream, cmd, _) when cmd in @commands_unary do
+  def unary_op(stream, cmd, _) do
     asm_op = case cmd do
       :neg -> "-"
       :not -> "!"
@@ -54,8 +39,7 @@ defmodule Jack.VM.ArithmeticCommand do
       //
 
       @R#{tempRegister}
-      D=M
-      D=#{asm_op}D
+      D=#{asm_op}M
       M=D
     """
 
@@ -63,7 +47,7 @@ defmodule Jack.VM.ArithmeticCommand do
   end
 
 
-  def op(stream, cmd, line) when cmd in @commands_comp do
+  def comp_op(stream, cmd, line) do
     asm_op = case cmd do
       :eq  -> "EQ"
       :gt  -> "GT"
@@ -97,22 +81,31 @@ defmodule Jack.VM.ArithmeticCommand do
     stream ++ [asm]
   end
 
+
+  def pop(num) do
+    [pop_temp(num)]
+  end
+
+
+  def push(stream, num) do
+    stream ++ [push_temp(num)]
+  end
+
 end
 
 
 defimpl Jack.VM.Command, for: Jack.VM.ArithmeticCommand do
-  alias Jack.VM
-  import VM.ArithmeticCommand
+  import Jack.VM.ArithmeticCommand
 
   @commands_binary [:add, :sub, :and, :or]
   @commands_unary  [:neg, :not]
   @commands_comp   [:eq, :gt, :lt]
 
-  def to_asm(%VM.ArithmeticCommand{ name: cmd, line: line }) do
+  def to_asm(%Jack.VM.ArithmeticCommand{ name: cmd, line: line }) do
     case cmd do
-      n when n in @commands_binary -> pop(2) |> op(cmd, line) |> push(1)
-      n when n in @commands_comp   -> pop(2) |> op(cmd, line) |> push(1)
-      n when n in @commands_unary  -> pop(1) |> op(cmd, line) |> push(1)
+      n when n in @commands_binary -> pop(2) |> binary_op(cmd, line) |> push(1)
+      n when n in @commands_comp   -> pop(2) |> comp_op(cmd, line)   |> push(1)
+      n when n in @commands_unary  -> pop(1) |> unary_op(cmd, line)  |> push(1)
     end
   end
 end

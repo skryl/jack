@@ -120,8 +120,7 @@
   //
 
   @R12
-  D=M
-  D=!D
+  D=!M
   M=D
 
   // push temp @R12 to stack
@@ -264,6 +263,22 @@
   // return from subroutine
   //
 
+  @LCL                // FRAME=LCL
+  D=M
+  @R12
+  M=D
+
+  // copy @R12[offset] to @R13
+  //
+
+  @R12
+  D=M
+  @5
+  A=D-A
+  D=M
+  @R13
+  M=D
+
   // pop value from stack into *ARG
   //
 
@@ -280,22 +295,6 @@
   D=M
   @SP
   M=D+1
-
-  @LCL                // FRAME=LCL
-  D=M
-  @R12
-  M=D
-
-  // copy @R12[offset] to @R13
-  //
-
-  @R12
-  D=M
-  @5
-  A=D-A
-  D=M
-  @R13
-  M=D
 
   // copy @R12[offset] to @LCL
   //

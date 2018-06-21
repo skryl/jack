@@ -1,6 +1,6 @@
 defmodule Jack.VM.Bundler do
   alias  Jack.VM
-  import VM.MemoryCommand, only: [set_sp: 1]
+  import VM.ASM, only: [set_sp: 1]
   import VM.FunctionCommand
 
   def bundle(code_stream, path, opts) do

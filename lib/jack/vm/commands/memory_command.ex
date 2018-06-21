@@ -1,124 +1,6 @@
 defmodule Jack.VM.MemoryCommand do
   defstruct name: nil, segment: nil, index: 0, class: nil, line: nil
-
-  def tempRegister, do: 12
-
-  def pop_temp(num) do
-    asm = Enum.map Range.new(0, num-1), fn n -> """
-      // pop value from stack into temp @R#{tempRegister+n}
-      //
-
-      @SP
-      M=M-1
-      A=M
-      D=M
-
-      @R#{tempRegister+n}
-      M=D
-    """
-    end
-
-    asm
-  end
-
-
-  def pop_reg(reg) do
-    asm = """
-      // pop value from stack into *#{reg}
-      //
-
-      @SP
-      M=M-1
-      A=M
-      D=M
-
-      @#{reg}
-      A=M
-      M=D
-    """
-
-    [asm]
-  end
-
-
-  def push_temp(num) do
-    asm = Enum.map Range.new(0, num-1), fn n -> """
-      // push temp @R#{tempRegister+n} to stack
-      //
-
-      @R#{tempRegister+n}
-      D=M
-
-      @SP
-      A=M
-      M=D
-
-      @SP
-      M=M+1
-    """
-    end
-
-    asm
-  end
-
-
-  def push_reg(reg) do
-    asm = """
-      // push @#{reg} to stack
-      //
-
-      @#{reg}
-      D=M
-
-      @SP
-      A=M
-      M=D
-
-      @SP
-      M=M+1
-    """
-
-    [asm]
-  end
-
-
-  def push_val(val) do
-    asm = """
-      // push #{val} to stack
-      //
-
-      @#{val}
-      D=A
-
-      @SP
-      A=M
-      M=D
-
-      @SP
-      M=M+1
-    """
-
-    [asm]
-  end
-
-
-  def copy_reg(destination, origin, offset) do
-    asm = """
-      // copy @#{origin}[offset] to @#{destination}
-      //
-
-      @#{origin}
-      D=M
-      @#{abs(offset)}
-      A=D#{offset < 0 && "-" || "+"}A
-      D=M
-      @#{destination}
-      M=D
-    """
-
-    [asm]
-  end
-
+  import Jack.VM.ASM
 
   def push(seg, offset, pointer, indirect) do
     offset = """
@@ -175,24 +57,11 @@ defmodule Jack.VM.MemoryCommand do
     [asm]
   end
 
-
-  def set_sp(val) do
-    asm = """
-      @#{val}
-      D=A
-      @SP
-      M=D
-    """
-
-    [asm]
-  end
-
 end
 
 
 defimpl Jack.VM.Command, for: Jack.VM.MemoryCommand do
-  alias Jack.VM
-  import VM.MemoryCommand
+  import Jack.VM.MemoryCommand
 
   @segment_map %{ constant: "0",
                   pointer:  "3",
@@ -203,7 +72,7 @@ defimpl Jack.VM.Command, for: Jack.VM.MemoryCommand do
                   that:     "THAT" }
 
 
-  def to_asm(%VM.MemoryCommand{ name: cmd, segment: seg, index: idx, class: class}) do
+  def to_asm(%Jack.VM.MemoryCommand{ name: cmd, segment: seg, index: idx, class: class}) do
     pointer = @segment_map[seg]
     indirect = try do String.to_integer(pointer) && false rescue _ -> true end
 

@@ -1,7 +1,7 @@
 defmodule Jack.VM.FunctionCommand do
   defstruct name: nil, function: nil, args: 0, class: nil, line: nil
-  alias Jack.VM
-  import VM.MemoryCommand
+  alias  Jack.VM
+  import Jack.VM.ASM
 
   # repeat k times:
   #  PUSH 0
@@ -90,7 +90,7 @@ defmodule Jack.VM.FunctionCommand do
       M=D
     """
 
-    ret = copy_reg("R#{tempRegister+1}", "R#{tempRegister}", -5)
+    ret = copy_mem("R#{tempRegister+1}", "R#{tempRegister}", -5)
 
     pop_arg = pop_reg("ARG")
 
@@ -103,7 +103,7 @@ defmodule Jack.VM.FunctionCommand do
 
     restore_regs = registers
       |> Enum.reverse |> Enum.with_index |> Enum.reverse
-      |> Enum.map(fn({reg, offset}) -> copy_reg(reg, "R#{tempRegister}", -(offset+1)) end)
+      |> Enum.map(fn({reg, offset}) -> copy_mem(reg, "R#{tempRegister}", -(offset+1)) end)
 
     jump = """
       @R#{tempRegister+1} // goto RET
@@ -118,15 +118,13 @@ end
 
 
 defimpl Jack.VM.Command, for: Jack.VM.FunctionCommand do
-  alias Jack.VM
-  import VM.FunctionCommand
+  import Jack.VM.FunctionCommand
 
   @commands_func   [:function]
   @commands_call   [:call]
   @commands_return [:return]
 
-
-  def to_asm(%VM.FunctionCommand{ name: name} = command) do
+  def to_asm(%Jack.VM.FunctionCommand{ name: name} = command) do
     case name do
       n when n in @commands_func   -> func(command)
       n when n in @commands_call   -> call(command)

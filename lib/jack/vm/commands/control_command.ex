@@ -1,11 +1,6 @@
 defmodule Jack.VM.ControlCommand do
   defstruct name: nil, symbol: nil, class: nil, line: nil
-  import Jack.VM.MemoryCommand
-
-  def pop(num) do
-    [pop_temp(num)]
-  end
-
+  import Jack.VM.ASM
 
   def label(%{symbol: sym}) do
     asm = """
@@ -43,19 +38,23 @@ defmodule Jack.VM.ControlCommand do
     stream ++ [asm]
   end
 
+
+  def pop(num) do
+    [pop_temp(num)]
+  end
+
+
 end
 
 
 defimpl Jack.VM.Command, for: Jack.VM.ControlCommand do
-  alias Jack.VM
-  import VM.ControlCommand
+  import Jack.VM.ControlCommand
 
   @commands_label [:label]
   @commands_goto  [:goto]
   @commands_cond  [:"if-goto"]
 
-
-  def to_asm(%VM.ControlCommand{ name: name } = command) do
+  def to_asm(%Jack.VM.ControlCommand{ name: name } = command) do
     case name do
       n when n in @commands_label -> label(command)
       n when n in @commands_goto  -> goto(command)
