@@ -38,8 +38,8 @@ defmodule Jack.VM.FunctionCommand do
       //
     """
 
-    store_addresses = Enum.map(addresses, &(push_val &1))
-    store_registers = Enum.map(registers, &(push_reg &1))
+    store_addresses = Enum.map(addresses, &push_val(&1))
+    store_registers = Enum.map(registers, &push_reg(&1))
 
     call = """
       @SP           // LCL=SP

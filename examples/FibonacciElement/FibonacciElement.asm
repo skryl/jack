@@ -89,6 +89,7 @@
   0;JMP
 
   (Sys.init.return.0) // label for return address
+
   // define subroutine Main.fibonacci[0]
   //
   (Main.fibonacci)

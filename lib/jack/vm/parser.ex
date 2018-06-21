@@ -20,7 +20,7 @@ defmodule Jack.VM.Parser do
   #
   defp clean(lines) do
     lines
-      |> Enum.map(&(String.trim Regex.replace(~r/\/\/.*/, &1, "")))
+      |> Enum.map(&String.trim(Regex.replace(~r/\/\/.*/, &1, "")))
       |> Enum.filter(&(String.length(&1) > 0))
   end
 

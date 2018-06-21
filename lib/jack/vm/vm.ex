@@ -1,37 +1,18 @@
 defmodule Jack.VM do
-  alias Jack.VM
+  alias Jack.VM.Streamer
   alias Jack.VM.Parser
-  alias Jack.VM.Compiler
-
-  import VM.MemoryCommand
-  import VM.FunctionCommand
-
-  def compile(paths) when is_list(paths) do
-    Enum.map(paths, &(Jack.VM.compile &1))
-      |> Enum.join("\n")
-      |> bootstrap
-  end
+  alias Jack.VM.Codegen
+  alias Jack.VM.Bundler
 
 
-  def compile(path) when not is_list(path) do
-    basename = Path.basename(path)
-    extname  = Path.extname(path)
-    class    = String.replace(basename, extname, "")
-
-    File.read!(path)
-      |> log
-      |> Parser.parse(class)
-      |> log
-      |> Compiler.to_asm
-      |> log
-  end
-
-
-  def bootstrap(instructions) do
-    call_init = call(%VM.FunctionCommand{function: "Sys.init", args: 0, line: 0})
-    bootstrap = Enum.join(set_sp(256) ++ call_init, "\n")
-
-    bootstrap <> instructions
+  def compile(path, opts) do
+    Streamer.map(path, fn({_, class, code}) ->
+      code |> log
+           |> Parser.parse(class)
+           |> log
+           |> Codegen.to_asm
+           |> log
+    end) |> Bundler.bundle(path, opts)
   end
 
 
