@@ -14,19 +14,25 @@ TODO
 To compile a directory containing *.vm files
 
 ```bash
-jack -v /path/to/project
+jack examples/FibonacciElement
 ```
 
 To compile a single *.vm file
 
 ```bash
-jack -v /path/to/project/file.vm
+jack examples/BasicLoop/BasicLoop.vm
 ```
 
 To specify the output filename
 
 ```bash
-jack -v -o file.asm /path/to/project/file.vm
+jack -o fib.asm examples/FibonacciElement
+```
+
+To dump debug info to STDOUT
+
+```bash
+jack -v -o fib.asm examples/FibonacciElement
 ```
 
 ### Assembling Hack assembly to machine code
