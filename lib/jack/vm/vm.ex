@@ -14,9 +14,13 @@ defmodule Jack.VM do
 
 
   def compile(path) when not is_list(path) do
+    basename = Path.basename(path)
+    extname  = Path.extname(path)
+    class    = String.replace(basename, extname, "")
+
     File.read!(path)
       |> log
-      |> Parser.parse
+      |> Parser.parse(class)
       |> log
       |> Compiler.to_asm
       |> log

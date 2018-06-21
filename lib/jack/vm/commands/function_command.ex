@@ -1,5 +1,5 @@
 defmodule Jack.VM.FunctionCommand do
-  defstruct name: nil, function: nil, args: 0, line: nil
+  defstruct name: nil, function: nil, args: 0, class: nil, line: nil
   alias Jack.VM
   import VM.MemoryCommand
 
@@ -30,7 +30,7 @@ defmodule Jack.VM.FunctionCommand do
   # (return-address)
   #
   def call(%VM.FunctionCommand{ function: function, args: args, line: line }) do
-    addresses = ["#{function}_called.#{line}"]
+    addresses = ["#{function}.return.#{line}"]
     registers = ["LCL", "ARG", "THIS", "THAT"]
 
     comment = """
@@ -56,10 +56,10 @@ defmodule Jack.VM.FunctionCommand do
       @ARG
       M=D
 
-      @#{function}  // goto function
+      @#{function}  // goto
       0;JMP
 
-      (#{function}_called.#{line}) // label for return address
+      (#{function}.return.#{line}) // label for return address
     """
 
 

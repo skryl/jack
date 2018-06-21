@@ -1,5 +1,5 @@
 defmodule Jack.VM.ControlCommand do
-  defstruct name: nil, symbol: nil, line: nil
+  defstruct name: nil, symbol: nil, class: nil, line: nil
   import Jack.VM.MemoryCommand
 
   def pop(num) do

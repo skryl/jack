@@ -1,5 +1,5 @@
 defmodule Jack.VM.ArithmeticCommand do
-  defstruct name: nil, line: nil
+  defstruct name: nil, class: nil, line: nil
   import Jack.VM.MemoryCommand
 
   @commands_binary [:add, :sub, :and, :or]

@@ -1,14 +1,5 @@
 defmodule Jack.VM.MemoryCommand do
-  defstruct name: nil, segment: nil, index: 0, line: nil
-
-  @segment_map %{ constant: "0",
-                  pointer:  "3",
-                  temp:     "5",
-                  static:   "16",
-                  local:    "LCL",
-                  argument: "ARG",
-                  this:     "THIS",
-                  that:     "THAT" }
+  defstruct name: nil, segment: nil, index: 0, class: nil, line: nil
 
   def tempRegister, do: 12
 
@@ -129,7 +120,7 @@ defmodule Jack.VM.MemoryCommand do
   end
 
 
-  def push(seg, offset) do
+  def push(seg, offset, pointer, indirect) do
     offset = """
       // push #{seg}[#{offset}] to stack
       //
@@ -139,8 +130,8 @@ defmodule Jack.VM.MemoryCommand do
     """
 
     mem_load = """
-      @#{@segment_map[seg]}
-      A=#{indirect?(seg) && "M" || "A"}+D
+      @#{pointer}
+      A=#{indirect && "M" || "A"}+D
       D=M
     """
 
@@ -159,15 +150,15 @@ defmodule Jack.VM.MemoryCommand do
   end
 
 
-  def pop(seg, offset) do
+  def pop(seg, offset, pointer, indirect) do
     asm = """
       // pop value from stack into #{seg}[#{offset}]
       //
 
       @#{offset}
       D=A
-      @#{@segment_map[seg]}
-      D=#{indirect?(seg) && "M" || "A"}+D
+      @#{pointer}
+      D=#{indirect && "M" || "A"}+D
       @R#{tempRegister}
       M=D
 
@@ -196,17 +187,6 @@ defmodule Jack.VM.MemoryCommand do
     [asm]
   end
 
-
-  defp indirect?(seg) do
-    try do
-      addr = @segment_map[seg]
-      String.to_integer(addr)
-      false
-    rescue
-      ArgumentError -> true
-    end
-  end
-
 end
 
 
@@ -214,10 +194,24 @@ defimpl Jack.VM.Command, for: Jack.VM.MemoryCommand do
   alias Jack.VM
   import VM.MemoryCommand
 
-  def to_asm(%VM.MemoryCommand{ name: cmd, segment: seg, index: idx}) do
-    case cmd do
-      :push -> push(seg, idx)
-      :pop  -> pop(seg, idx)
+  @segment_map %{ constant: "0",
+                  pointer:  "3",
+                  temp:     "5",
+                  local:    "LCL",
+                  argument: "ARG",
+                  this:     "THIS",
+                  that:     "THAT" }
+
+
+  def to_asm(%VM.MemoryCommand{ name: cmd, segment: seg, index: idx, class: class}) do
+    pointer = @segment_map[seg]
+    indirect = try do String.to_integer(pointer) && false rescue _ -> true end
+
+    case { cmd, seg } do
+      { :push, :static } -> push(seg, 0, "#{class}.#{idx}", false)
+      { :pop, :static }  -> pop(seg, 0, "#{class}.#{idx}", false)
+      { :push, _ }       -> push(seg, idx, pointer, indirect)
+      { :pop, _ }        -> pop(seg, idx, pointer, indirect)
     end
   end
 end
