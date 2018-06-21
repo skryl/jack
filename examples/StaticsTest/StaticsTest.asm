@@ -89,6 +89,7 @@
   0;JMP
 
   (Sys.init.return.0) // label for return address
+
   // define subroutine Class1.set[0]
   //
   (Class1.set)

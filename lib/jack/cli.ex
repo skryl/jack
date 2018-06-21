@@ -4,7 +4,7 @@ defmodule Jack.CLI do
   def main(argv) do
     { path, opts } = parse_args(argv)
     configure(opts)
-    compile(path, opts)
+    vm_compile(path, opts)
   end
 
 
@@ -42,7 +42,7 @@ defmodule Jack.CLI do
   end
 
 
-  defp compile(path, opts) do
+  defp vm_compile(path, opts) do
     Logger.info("compiling path #{path}")
     filename = Jack.VM.compile(path, opts)
     Logger.info("writing output to #{filename}")
