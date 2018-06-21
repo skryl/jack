@@ -11,8 +11,22 @@ TODO
 
 ### Compiling Jack VM code to Hack assembly
 
+To compile a directory containing *.vm files
+
 ```bash
 jack -v /path/to/project
+```
+
+To compile a single *.vm file
+
+```bash
+jack -v /path/to/project/file.vm
+```
+
+To specify the output filename
+
+```bash
+jack -v -o file.asm /path/to/project/file.vm
 ```
 
 ### Assembling Hack assembly to machine code
