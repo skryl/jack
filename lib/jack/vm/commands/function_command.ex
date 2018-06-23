@@ -1,25 +1,30 @@
 defmodule Jack.VM.FunctionCommand do
   defstruct name: nil, function: nil, args: 0, class: nil, line: nil
-  alias  Jack.VM
   import Jack.VM.ASM
 
-  # repeat k times:
-  #  PUSH 0
+
+  # function entry code simply allocates memory for its locals
   #
-  def func(%VM.FunctionCommand{ function: function, args: args }) do
+  #  push 0 k times
+  #
+  def func(function, args, _) do
     label = """
       // define subroutine #{function}[#{args}]
       //
+
       (#{function})
     """
 
-    clear_locals = Enum.map(0..args |> Enum.filter(&(&1>0)), fn(_) -> push_val(0) end)
+    clear_locals = for n <- (0..args), n > 0, do: push_val(0)
 
     [label] ++ clear_locals
   end
 
 
-  #   push return-address // (using label below)
+  # function call must push its return address and all of its
+  # registers to the stack before making the call
+  #
+  #   push return-address
   #   push LCL
   #   push ARG
   #   push THIS
@@ -29,25 +34,26 @@ defmodule Jack.VM.FunctionCommand do
   #   goto f
   # (return-address)
   #
-  def call(%VM.FunctionCommand{ function: function, args: args, line: line }) do
+  def call(function, args, line) do
     addresses = ["#{function}.return.#{line}"]
     registers = ["LCL", "ARG", "THIS", "THAT"]
+
+    store_addresses = for a <- addresses, do: push_val(a)
+    store_registers = for r <- registers, do: push_reg(r)
 
     comment = """
       // call subroutine #{function}[#{args}]
       //
+
     """
 
-    store_addresses = Enum.map(addresses, &push_val(&1))
-    store_registers = Enum.map(registers, &push_reg(&1))
-
     call = """
-      @SP           // LCL=SP
+      @SP  // LCL=SP
       D=M
       @LCL
       M=D
 
-      @SP           // ARG = SP-args-5
+      @SP  // ARG = SP-args-5
       D=M
       @5
       D=D-A
@@ -59,14 +65,16 @@ defmodule Jack.VM.FunctionCommand do
       @#{function}  // goto
       0;JMP
 
-      (#{function}.return.#{line}) // label for return address
+      (#{function}.return.#{line})  // label for return address
     """
-
 
     [comment] ++ store_addresses ++ store_registers ++ [call]
   end
 
 
+  # return from function call must restore the callers registers
+  # and push the return value on the stack
+  #
   #  FRAME=LCL
   #  RET=*(FRAME-5)
   #  *ARG=pop()
@@ -78,13 +86,13 @@ defmodule Jack.VM.FunctionCommand do
   #  goto RET
   #
   def return do
-    registers = ["LCL", "ARG", "THIS", "THAT"]
+    registers = [{ "LCL", 4 }, { "ARG", 3 }, { "THIS", 2 }, { "THAT", 1 }]
 
     frame = """
       // return from subroutine
       //
 
-      @LCL                // FRAME=LCL
+      @LCL   // FRAME=LCL
       D=M
       @R#{tempRegister}
       M=D
@@ -95,15 +103,15 @@ defmodule Jack.VM.FunctionCommand do
     pop_arg = pop_reg("ARG")
 
     sp = """
-      @ARG                // SP=ARG+1
+      @ARG   // SP=ARG+1
       D=M
       @SP
       M=D+1
     """
 
-    restore_regs = registers
-      |> Enum.reverse |> Enum.with_index |> Enum.reverse
-      |> Enum.map(fn({reg, offset}) -> copy_mem(reg, "R#{tempRegister}", -(offset+1)) end)
+    restore = for { reg, offset } <- registers do
+      copy_mem(reg, "R#{tempRegister}", -offset)
+    end
 
     jump = """
       @R#{tempRegister+1} // goto RET
@@ -111,7 +119,7 @@ defmodule Jack.VM.FunctionCommand do
       0;JMP
     """
 
-    [frame] ++ [ret] ++ [pop_arg] ++ [sp] ++ restore_regs ++ [jump]
+    [frame] ++ [ret] ++ [pop_arg] ++ [sp] ++ restore ++ [jump]
   end
 
 end
@@ -124,10 +132,10 @@ defimpl Jack.VM.Command, for: Jack.VM.FunctionCommand do
   @commands_call   [:call]
   @commands_return [:return]
 
-  def to_asm(%Jack.VM.FunctionCommand{ name: name} = command) do
+  def to_asm(%{name: name, function: function, args: args, line: line}) do
     case name do
-      n when n in @commands_func   -> func(command)
-      n when n in @commands_call   -> call(command)
+      n when n in @commands_func   -> func(function, args, line)
+      n when n in @commands_call   -> call(function, args, line)
       n when n in @commands_return -> return()
     end
   end

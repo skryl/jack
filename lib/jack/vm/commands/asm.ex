@@ -2,8 +2,11 @@ defmodule Jack.VM.ASM do
 
   def tempRegister, do: 12
 
+
   def set_sp(val) do
     asm = """
+      // set SP to #{val}
+
       @#{val}
       D=A
       @SP
@@ -47,7 +50,7 @@ defmodule Jack.VM.ASM do
     """
     end
 
-    asm
+    [asm]
   end
 
 
@@ -68,7 +71,7 @@ defmodule Jack.VM.ASM do
     """
     end
 
-    asm
+    [asm]
   end
 
 

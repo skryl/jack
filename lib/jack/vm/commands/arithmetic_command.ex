@@ -11,7 +11,8 @@ defmodule Jack.VM.ArithmeticCommand do
     end
 
     asm = """
-      // #{cmd} values in temp registers R#{tempRegister} and R#{tempRegister+1} and put result into R#{tempRegister}
+      // #{cmd} values in temp registers R#{tempRegister} and R#{tempRegister+1}
+      // and put result into R#{tempRegister}
       //
 
       @R#{tempRegister}
@@ -55,7 +56,8 @@ defmodule Jack.VM.ArithmeticCommand do
     end
 
     asm = """
-      // #{cmd} values in R#{tempRegister} and R#{tempRegister+1} and put result into R#{tempRegister}
+      // compare values in R#{tempRegister} and R#{tempRegister+1} and place
+      // boolean result in R#{tempRegister}
       //
 
       @R#{tempRegister}
@@ -66,7 +68,6 @@ defmodule Jack.VM.ArithmeticCommand do
 
       @TRUE.#{line}
       D;J#{asm_op}
-      (FALSE.#{line})
       D=0
       @END.#{line}
       0;JMP
@@ -82,13 +83,13 @@ defmodule Jack.VM.ArithmeticCommand do
   end
 
 
-  def pop(num) do
-    [pop_temp(num)]
+  def pop(stream \\ [], num) do
+    stream ++ pop_temp(num)
   end
 
 
-  def push(stream, num) do
-    stream ++ [push_temp(num)]
+  def push(stream \\ [], num) do
+    stream ++ push_temp(num)
   end
 
 end
@@ -101,7 +102,7 @@ defimpl Jack.VM.Command, for: Jack.VM.ArithmeticCommand do
   @commands_unary  [:neg, :not]
   @commands_comp   [:eq, :gt, :lt]
 
-  def to_asm(%Jack.VM.ArithmeticCommand{ name: cmd, line: line }) do
+  def to_asm(%{ name: cmd, line: line }) do
     case cmd do
       n when n in @commands_binary -> pop(2) |> binary_op(cmd, line) |> push(1)
       n when n in @commands_comp   -> pop(2) |> comp_op(cmd, line)   |> push(1)

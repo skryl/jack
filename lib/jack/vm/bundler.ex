@@ -18,8 +18,7 @@ defmodule Jack.VM.Bundler do
 
 
   defp bootstrap(code_stream) do
-    call_init = call(%VM.FunctionCommand{function: "Sys.init", args: 0, line: 0})
-    bootstrap = Enum.join(set_sp(256) ++ call_init, "\n")
+    bootstrap = Enum.join(set_sp(256) ++ call("Sys.init", 0, 0), "\n")
     List.insert_at(code_stream, 0, bootstrap)
   end
 

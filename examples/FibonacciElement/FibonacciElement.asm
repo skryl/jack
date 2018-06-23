@@ -1,3 +1,5 @@
+  // set SP to 256
+
   @256
   D=A
   @SP
@@ -5,6 +7,7 @@
 
   // call subroutine Sys.init[0]
   //
+
 
   // push Sys.init.return.0 to stack
   //
@@ -92,9 +95,10 @@
 
   // define subroutine Main.fibonacci[0]
   //
+
   (Main.fibonacci)
 
-  // push argument[0] to stack
+  // push ARG[0] to stack
   //
 
   @0
@@ -102,6 +106,7 @@
   @ARG
   A=M+D
   D=M
+
   @SP
   A=M
   M=D
@@ -109,11 +114,12 @@
   @SP
   M=M+1
 
-  // push constant[2] to stack
+  // push 2 to stack
   //
 
   @2
   D=A
+
   @SP
   A=M
   M=D
@@ -143,7 +149,8 @@
   @R13
   M=D
 
-  // lt values in R12 and R13 and put result into R12
+  // compare values in R12 and R13 and place
+  // boolean result in R12
   //
 
   @R12
@@ -154,7 +161,6 @@
 
   @TRUE.4
   D;JLT
-  (FALSE.4)
   D=0
   @END.4
   0;JMP
@@ -178,7 +184,7 @@
   @SP
   M=M+1
 
-  // pop value from stack into temp @R12
+  // conditional jump to label
   //
 
   @SP
@@ -186,26 +192,21 @@
   A=M
   D=M
 
-  @R12
-  M=D
-
-  // conditional jump to label IF_TRUE
-  //
-  @R12
-  D=M
   @IF_TRUE
   D;JNE
 
-  // jump to label IF_FALSE
+  // jump to label
   //
+
   @IF_FALSE
   0;JMP
 
-  // create a label
+  // create label
   //
+
   (IF_TRUE)
 
-  // push argument[0] to stack
+  // push ARG[0] to stack
   //
 
   @0
@@ -213,6 +214,7 @@
   @ARG
   A=M+D
   D=M
+
   @SP
   A=M
   M=D
@@ -223,7 +225,7 @@
   // return from subroutine
   //
 
-  @LCL                // FRAME=LCL
+  @LCL   // FRAME=LCL
   D=M
   @R12
   M=D
@@ -251,7 +253,7 @@
   A=M
   M=D
 
-  @ARG                // SP=ARG+1
+  @ARG   // SP=ARG+1
   D=M
   @SP
   M=D+1
@@ -304,11 +306,12 @@
   A=M
   0;JMP
 
-  // create a label
+  // create label
   //
+
   (IF_FALSE)
 
-  // push argument[0] to stack
+  // push ARG[0] to stack
   //
 
   @0
@@ -316,6 +319,7 @@
   @ARG
   A=M+D
   D=M
+
   @SP
   A=M
   M=D
@@ -323,11 +327,12 @@
   @SP
   M=M+1
 
-  // push constant[2] to stack
+  // push 2 to stack
   //
 
   @2
   D=A
+
   @SP
   A=M
   M=D
@@ -357,7 +362,8 @@
   @R13
   M=D
 
-  // sub values in temp registers R12 and R13 and put result into R12
+  // sub values in temp registers R12 and R13
+  // and put result into R12
   //
 
   @R12
@@ -384,6 +390,7 @@
 
   // call subroutine Main.fibonacci[1]
   //
+
 
   // push Main.fibonacci.return.14 to stack
   //
@@ -469,7 +476,7 @@
 
   (Main.fibonacci.return.14) // label for return address
 
-  // push argument[0] to stack
+  // push ARG[0] to stack
   //
 
   @0
@@ -477,6 +484,7 @@
   @ARG
   A=M+D
   D=M
+
   @SP
   A=M
   M=D
@@ -484,11 +492,12 @@
   @SP
   M=M+1
 
-  // push constant[1] to stack
+  // push 1 to stack
   //
 
   @1
   D=A
+
   @SP
   A=M
   M=D
@@ -518,7 +527,8 @@
   @R13
   M=D
 
-  // sub values in temp registers R12 and R13 and put result into R12
+  // sub values in temp registers R12 and R13
+  // and put result into R12
   //
 
   @R12
@@ -545,6 +555,7 @@
 
   // call subroutine Main.fibonacci[1]
   //
+
 
   // push Main.fibonacci.return.18 to stack
   //
@@ -652,7 +663,8 @@
   @R13
   M=D
 
-  // add values in temp registers R12 and R13 and put result into R12
+  // add values in temp registers R12 and R13
+  // and put result into R12
   //
 
   @R12
@@ -680,7 +692,7 @@
   // return from subroutine
   //
 
-  @LCL                // FRAME=LCL
+  @LCL   // FRAME=LCL
   D=M
   @R12
   M=D
@@ -708,7 +720,7 @@
   A=M
   M=D
 
-  @ARG                // SP=ARG+1
+  @ARG   // SP=ARG+1
   D=M
   @SP
   M=D+1
@@ -763,13 +775,15 @@
 
   // define subroutine Sys.init[0]
   //
+
   (Sys.init)
 
-  // push constant[4] to stack
+  // push 4 to stack
   //
 
   @4
   D=A
+
   @SP
   A=M
   M=D
@@ -779,6 +793,7 @@
 
   // call subroutine Main.fibonacci[1]
   //
+
 
   // push Main.fibonacci.return.3 to stack
   //
@@ -864,11 +879,13 @@
 
   (Main.fibonacci.return.3) // label for return address
 
-  // create a label
+  // create label
   //
+
   (WHILE)
 
-  // jump to label WHILE
+  // jump to label
   //
+
   @WHILE
   0;JMP

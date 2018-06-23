@@ -2,22 +2,18 @@ defmodule Jack.VM.MemoryCommand do
   defstruct name: nil, segment: nil, index: 0, class: nil, line: nil
   import Jack.VM.ASM
 
-  def push(seg, offset, pointer, indirect) do
-    offset = """
-      // push #{seg}[#{offset}] to stack
+
+  def push(address, offset, indirect) do
+    asm = """
+      // push #{address}[#{offset}] to stack
       //
 
       @#{offset}
       D=A
-    """
-
-    mem_load = """
-      @#{pointer}
+      @#{address}
       A=#{indirect && "M" || "A"}+D
       D=M
-    """
 
-    push_stack = """
       @SP
       A=M
       M=D
@@ -26,20 +22,18 @@ defmodule Jack.VM.MemoryCommand do
       M=M+1
     """
 
-    asm = offset <> (if seg != :constant, do: mem_load, else: "") <> push_stack
-
     [asm]
   end
 
 
-  def pop(seg, offset, pointer, indirect) do
+  def pop(address, offset, indirect) do
     asm = """
-      // pop value from stack into #{seg}[#{offset}]
+      // pop value from stack into #{address}[#{offset}]
       //
 
       @#{offset}
       D=A
-      @#{pointer}
+      @#{address}
       D=#{indirect && "M" || "A"}+D
       @R#{tempRegister}
       M=D
@@ -62,6 +56,7 @@ end
 
 defimpl Jack.VM.Command, for: Jack.VM.MemoryCommand do
   import Jack.VM.MemoryCommand
+  import Jack.VM.ASM, only: [push_val: 1]
 
   @segment_map %{ constant: "0",
                   pointer:  "3",
@@ -72,15 +67,16 @@ defimpl Jack.VM.Command, for: Jack.VM.MemoryCommand do
                   that:     "THAT" }
 
 
-  def to_asm(%Jack.VM.MemoryCommand{ name: cmd, segment: seg, index: idx, class: class}) do
-    pointer = @segment_map[seg]
-    indirect = try do String.to_integer(pointer) && false rescue _ -> true end
+  def to_asm(%{ name: cmd, segment: seg, index: offset, class: class }) do
+    address  = @segment_map[seg]
+    indirect = try do String.to_integer(address) && false rescue _ -> true end
 
     case { cmd, seg } do
-      { :push, :static } -> push(seg, 0, "#{class}.#{idx}", false)
-      { :pop, :static }  -> pop(seg, 0, "#{class}.#{idx}", false)
-      { :push, _ }       -> push(seg, idx, pointer, indirect)
-      { :pop, _ }        -> pop(seg, idx, pointer, indirect)
+      { :push, :constant } -> push_val(offset)
+      { :push, :static }   -> push("#{class}.#{offset}", 0, false)
+      { :pop, :static }    -> pop("#{class}.#{offset}", 0, false)
+      { :push, _ }         -> push(address, offset, indirect)
+      { :pop, _ }          -> pop(address, offset, indirect)
     end
   end
 end

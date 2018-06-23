@@ -1,11 +1,12 @@
 defmodule Jack.VM.ControlCommand do
   defstruct name: nil, symbol: nil, class: nil, line: nil
-  import Jack.VM.ASM
 
-  def label(%{symbol: sym}) do
+
+  def label(sym) do
     asm = """
-      // create a label
+      // create label
       //
+
       (#{sym})
     """
 
@@ -13,10 +14,11 @@ defmodule Jack.VM.ControlCommand do
   end
 
 
-  def goto(%{symbol: sym}) do
+  def goto(sym) do
     asm = """
-      // jump to label #{sym}
+      // jump to label
       //
+
       @#{sym}
       0;JMP
     """
@@ -25,22 +27,21 @@ defmodule Jack.VM.ControlCommand do
   end
 
 
-  def cond(stream, %{symbol: sym}) do
+  def if_goto(sym) do
     asm = """
-      // conditional jump to label #{sym}
+      // conditional jump to label
       //
-      @R#{tempRegister}
+
+      @SP
+      M=M-1
+      A=M
       D=M
+
       @#{sym}
       D;JNE
     """
 
-    stream ++ [asm]
-  end
-
-
-  def pop(num) do
-    [pop_temp(num)]
+    [asm]
   end
 
 
@@ -54,11 +55,11 @@ defimpl Jack.VM.Command, for: Jack.VM.ControlCommand do
   @commands_goto  [:goto]
   @commands_cond  [:"if-goto"]
 
-  def to_asm(%Jack.VM.ControlCommand{ name: name } = command) do
+  def to_asm(%{ name: name, symbol: sym }) do
     case name do
-      n when n in @commands_label -> label(command)
-      n when n in @commands_goto  -> goto(command)
-      n when n in @commands_cond  -> pop(1) |> cond(command)
+      n when n in @commands_label -> label(sym)
+      n when n in @commands_goto  -> goto(sym)
+      n when n in @commands_cond  -> if_goto(sym)
     end
   end
 end
