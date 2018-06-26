@@ -4,24 +4,33 @@ defmodule Jack.CLI do
   def main(argv) do
     { path, opts } = parse_args(argv)
     configure(opts)
-    vm_compile(path, opts)
+
+    if opts[:vm] do
+      vm_compile(path, opts)
+    else
+      source_compile(path, opts)
+    end
   end
 
 
   def parse_args(argv) do
-    parse = OptionParser.parse(argv,
-      switches: [ help:    :boolean,
-                  verbose: :boolean,
-                  vm:      :boolean,
-                  output:  :string],
+    optparse = OptionParser.parse(argv,
+      switches: [ help:       :boolean,
+                  verbose:    :boolean,
+                  vm:         :boolean,
+                  output:     :string,
+                  ast_dump:   :string,
+                  token_dump: :string],
       aliases:  [ h: :help,
                   v: :verbose,
                   m: :vm,
-                  o: :output ])
+                  o: :output,
+                  a: :ast_dump,
+                  t: :token_dump ])
 
-    Logger.debug("parse_args: #{inspect parse}")
+    Logger.debug("parse_args: #{inspect optparse}")
 
-    case parse do
+    case optparse do
       { [ help: true ], _, _  } -> help()
       { _ = opts, [ path ], _ } -> { path, opts }
       _ -> help()
@@ -43,9 +52,16 @@ defmodule Jack.CLI do
 
 
   defp vm_compile(path, opts) do
-    Logger.info("compiling path #{path}")
+    Logger.info("compiling vm path #{path}")
     filename = Jack.VM.compile(path, opts)
     Logger.info("writing output to #{filename}")
+  end
+
+
+  defp source_compile(path, opts) do
+    Logger.info("compiling source path #{path}")
+    filenames = Jack.Lang.compile(path, opts)
+    # Logger.info("writing output to #{filenames}")
   end
 
 

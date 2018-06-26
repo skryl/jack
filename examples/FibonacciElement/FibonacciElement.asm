@@ -74,12 +74,12 @@
   @SP
   M=M+1
 
-  @SP           // LCL=SP
+  @SP  // LCL=SP
   D=M
   @LCL
   M=D
 
-  @SP           // ARG = SP-args-5
+  @SP  // ARG = SP-args-5
   D=M
   @5
   D=D-A
@@ -91,7 +91,7 @@
   @Sys.init  // goto
   0;JMP
 
-  (Sys.init.return.0) // label for return address
+  (Sys.init.return.0)  // label for return address
 
   // define subroutine Main.fibonacci[0]
   //
@@ -457,12 +457,12 @@
   @SP
   M=M+1
 
-  @SP           // LCL=SP
+  @SP  // LCL=SP
   D=M
   @LCL
   M=D
 
-  @SP           // ARG = SP-args-5
+  @SP  // ARG = SP-args-5
   D=M
   @5
   D=D-A
@@ -474,7 +474,7 @@
   @Main.fibonacci  // goto
   0;JMP
 
-  (Main.fibonacci.return.14) // label for return address
+  (Main.fibonacci.return.14)  // label for return address
 
   // push ARG[0] to stack
   //
@@ -622,12 +622,12 @@
   @SP
   M=M+1
 
-  @SP           // LCL=SP
+  @SP  // LCL=SP
   D=M
   @LCL
   M=D
 
-  @SP           // ARG = SP-args-5
+  @SP  // ARG = SP-args-5
   D=M
   @5
   D=D-A
@@ -639,7 +639,7 @@
   @Main.fibonacci  // goto
   0;JMP
 
-  (Main.fibonacci.return.18) // label for return address
+  (Main.fibonacci.return.18)  // label for return address
 
   // pop value from stack into temp @R12
   //
@@ -860,12 +860,12 @@
   @SP
   M=M+1
 
-  @SP           // LCL=SP
+  @SP  // LCL=SP
   D=M
   @LCL
   M=D
 
-  @SP           // ARG = SP-args-5
+  @SP  // ARG = SP-args-5
   D=M
   @5
   D=D-A
@@ -877,7 +877,7 @@
   @Main.fibonacci  // goto
   0;JMP
 
-  (Main.fibonacci.return.3) // label for return address
+  (Main.fibonacci.return.3)  // label for return address
 
   // create label
   //

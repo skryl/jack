@@ -1,6 +1,6 @@
 defmodule Jack.VM.Parser do
-  require Logger
   alias Jack.VM
+  alias Jack.Helpers.Cleaning
 
   @memory_commands     ["push", "pop"]
   @function_commands   ["function", "call", "return"]
@@ -9,28 +9,14 @@ defmodule Jack.VM.Parser do
 
 
   def parse(code, class) do
-    code |> split |> clean |> tokenize(class)
+    code |> Cleaning.clean |> tokenize(class)
   end
-
-  defp split(text) do
-    String.split(text, "\n")
-  end
-
-  # clear comments and empty lines
-  #
-  defp clean(lines) do
-    lines
-      |> Enum.map(&String.trim(Regex.replace(~r/\/\/.*/, &1, "")))
-      |> Enum.filter(&(String.length(&1) > 0))
-  end
-
 
   # convert instructions to tuples of the form { instr, arg1, arg2 }
   #
   defp tokenize(lines, class) do
     Enum.map (lines |> Enum.with_index), fn({ line, idx }) ->
-      line |> String.trim
-           |> String.split(" ")
+      line |> String.split(~r/\s+/, trim: true)
            |> List.to_tuple
            |> from_tuple(class, idx+1)
     end
@@ -40,8 +26,6 @@ defmodule Jack.VM.Parser do
   # convert tuples to proper types
   #
   defp from_tuple(tuple, class, line) do
-    if Logger.level == :debug, do: IO.inspect(tuple)
-
     case tuple do
       {name, seg, idx} when name in @memory_commands ->
         %VM.MemoryCommand{
