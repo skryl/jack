@@ -1,11 +1,11 @@
 defmodule Jack.Lang do
   alias Jack.Helpers.Fs
-  import Jack.Helpers.Logging
   alias Jack.Helpers.Serialization
-
   alias Jack.Lang.Tokenizer
   alias Jack.Lang.Parser
   alias Jack.Lang.Codegen
+
+  import Jack.Helpers.Logging
 
 
   def compile(path, opts) do
@@ -14,8 +14,9 @@ defmodule Jack.Lang do
            |> Tokenizer.tokenize
            |> log
            |> Serialization.to_xml(opts)
-          #  |> Parser.parse(class)
-          #  |> log
+           |> Parser.parse(class)
+           |> log
+          #  |> Serialization.to_xml(opts)
     end
   end
 
