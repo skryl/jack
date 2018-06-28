@@ -1,4 +1,4 @@
-defmodule Jack.Helpers.Cleaning do
+defmodule Jack.Helpers.Comments do
 
   @line_comment ~r/\/\/.*/
   @doc_comment  ~r/\/\*\*.*\*\//m

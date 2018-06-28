@@ -1,7 +1,7 @@
 defmodule Jack.Lang.Tokenizer do
-  alias Jack.Helpers.Cleaning
+  alias Jack.Helpers.Comments
   alias Jack.Helpers.Serialization
-  alias Jack.Lang
+  alias Jack.Lang.Tokens.{Keyword, Identifier, Symbol, IntegerConstant, StringConstant}
 
   @symbols  ~w{{ \} ( ) [ ] . , ; + - * / & | < > = ~]}
   @keywords ~w{ class constructor function method field static var int char
@@ -16,7 +16,7 @@ defmodule Jack.Lang.Tokenizer do
 
   def tokenize(code) do
     code
-      |> Cleaning.clean
+      |> Comments.clean
       |> tokenize_lines
   end
 
@@ -83,24 +83,24 @@ defmodule Jack.Lang.Tokenizer do
   defp shift_identifier(line, pos) do
     [_, id, rest] = Regex.run(@identifier, line)
     cond do
-      is_keyword?(id) -> { %Lang.Keyword{value: id, pos: pos}, String.length(id), rest}
-      true -> { %Lang.Identifier{value: id, pos: pos}, String.length(id), rest }
+      is_keyword?(id) -> { %Keyword{value: id, pos: pos}, String.length(id), rest}
+      true -> { %Identifier{value: id, pos: pos}, String.length(id), rest }
     end
   end
 
   defp shift_symbol(line, pos) do
     [_, sym, rest] = Regex.run(@symbol, line)
-    { %Lang.Symbol{value: sym, pos: pos}, String.length(sym), rest }
+    { %Symbol{value: sym, pos: pos}, String.length(sym), rest }
   end
 
   defp shift_integer(line, pos) do
     [_, int, rest] = Regex.run(@integer, line)
-    { %Lang.IntegerConstant{value: int, pos: pos}, String.length(int), rest }
+    { %IntegerConstant{value: int, pos: pos}, String.length(int), rest }
   end
 
   defp shift_string(line, pos) do
     [_, str, rest] = Regex.run(@string, line)
-    { %Lang.StringConstant{value: str, pos: pos}, String.length(str), rest }
+    { %StringConstant{value: str, pos: pos}, String.length(str), rest }
   end
 
   defp shift_whitespace(line, pos) do

@@ -1,6 +1,6 @@
 defmodule Jack.VM.Parser do
   alias Jack.VM
-  alias Jack.Helpers.Cleaning
+  alias Jack.Helpers.Comments
 
   @memory_commands     ["push", "pop"]
   @function_commands   ["function", "call", "return"]
@@ -9,7 +9,7 @@ defmodule Jack.VM.Parser do
 
 
   def parse(code, class) do
-    code |> Cleaning.clean |> tokenize(class)
+    code |> Comments.clean |> tokenize(class)
   end
 
   # convert instructions to tuples of the form { instr, arg1, arg2 }
