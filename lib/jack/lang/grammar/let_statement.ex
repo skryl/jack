@@ -1,3 +1,3 @@
 defmodule Jack.Lang.Grammar.LetStatement do
-  defstruct body: nil
+  defstruct name: nil, index: nil, value: nil
 end

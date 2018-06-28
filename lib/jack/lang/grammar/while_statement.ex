@@ -1,3 +1,3 @@
 defmodule Jack.Lang.Grammar.WhileStatement do
-  defstruct body: nil
+  defstruct condition: nil, body: nil
 end

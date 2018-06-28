@@ -1,3 +1,3 @@
 defmodule Jack.Lang.Grammar.DoStatement do
-  defstruct body: nil
+  defstruct call: nil
 end

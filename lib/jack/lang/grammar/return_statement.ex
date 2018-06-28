@@ -1,3 +1,3 @@
 defmodule Jack.Lang.Grammar.ReturnStatement do
-  defstruct body: nil
+  defstruct value: nil
 end
