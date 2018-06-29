@@ -1,11 +1,15 @@
 defmodule Jack.Lang.Parser do
-  alias Jack.Lang.Tokens.{Keyword, Identifier, Symbol}
-  alias Jack.Lang.Grammar.{ParseError, Class, ClassVar, Function, FunctionParameter, Var}
+  alias Jack.Lang.Tokens.{Keyword, Identifier, Symbol, StringConstant, IntegerConstant}
+  alias Jack.Lang.Grammar.{ParseError, Class, ClassVarDec, Function, FunctionParameter, VarDec,
+                           Expression, UnaryOp, BinaryOp, FunctionCall, KeywordConstant, VarAccess}
   alias Jack.Lang.Grammar.{LetStatement, IfStatement, WhileStatement, DoStatement, ReturnStatement}
 
+  @tokens [Keyword, Identifier, Symbol]
+  @keyword_constants ~w(true false null this)
   @statement_types ~w{let if while do return}
   @class_variable_scopes ~w{field static}
-  @tokens [Keyword, Identifier, Symbol]
+  @unary_ops  ~w{- ~}
+  @binary_ops ~w{+ - * / & | < > =}
 
 
   def parse(tokens, class) do
@@ -33,7 +37,7 @@ defmodule Jack.Lang.Parser do
             end
           _ -> { :error, %ParseError{pos: t1.pos, message: "unexpected token `#{t1.value}`, expecting class"} }
         end
-      _ -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting class"} }
+      [] -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting class"} }
     end
   end
 
@@ -57,7 +61,7 @@ defmodule Jack.Lang.Parser do
             { :ok, Enum.reverse(body), rest }
           _ -> { :error, %ParseError{ pos: next.pos, message: "unexpected token `#{next.value}`, expecting class body"} }
         end
-      _ -> { :error, %ParseError{ pos: nil, message: "unexpected end of file, expecting class body"} }
+      [] -> { :error, %ParseError{ pos: nil, message: "unexpected end of file, expecting class body"} }
     end
   end
 
@@ -74,7 +78,7 @@ defmodule Jack.Lang.Parser do
             end
           _ = error -> error
         end
-      _ -> { :error, %ParseError{ pos: nil, message: "unexpected end of file, expecting class variables"} }
+      [] -> { :error, %ParseError{ pos: nil, message: "unexpected end of file, expecting class variables"} }
     end
   end
 
@@ -85,10 +89,10 @@ defmodule Jack.Lang.Parser do
       [t1 | [t2 | [t3 | rest]]] ->
         case [t1, t2, t3] do
           [%Keyword{value: scope}, %t{value: type}, %Identifier{value: name}] when t in [Keyword, Identifier]->
-            { :ok, %ClassVar{scope: scope, type: type, name: name}, rest }
+            { :ok, %ClassVarDec{scope: scope, type: type, name: name}, rest }
           _ -> { :error, %ParseError{ pos: t1.pos, message: "unexpected token `#{t1.value}`, expecting class variable"} }
         end
-      _ -> { :error, %ParseError{ pos: nil, message: "unexpected end of file, expecting class variable"} }
+      [] -> { :error, %ParseError{ pos: nil, message: "unexpected end of file, expecting class variable"} }
     end
   end
 
@@ -106,7 +110,7 @@ defmodule Jack.Lang.Parser do
           %Symbol{value: ";"} -> { :ok, Enum.reverse(vars), rest }
           _ -> { :error, %ParseError{pos: next.pos, message: "unexpected token `#{next.value}`, expecting additional class variables"} }
         end
-      _ -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting additional class variables"} }
+      [] -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting additional class variables"} }
     end
   end
 
@@ -117,10 +121,10 @@ defmodule Jack.Lang.Parser do
       [t1 | [t2 | rest]] ->
         case [t1, t2] do
           [%Symbol{value: ","}, %Identifier{value: name}] ->
-            { :ok, %ClassVar{scope: prev_var.scope, type: prev_var.type, name: name}, rest }
+            { :ok, %ClassVarDec{scope: prev_var.scope, type: prev_var.type, name: name}, rest }
           _ -> { :error, %ParseError{ pos: t1.pos, message: "unexpected token `#{t1.value}`, expecting additional class variable"} }
         end
-      _ -> { :error, %ParseError{ pos: nil, message: "unexpected end of file, expecting additional class variable"} }
+      [] -> { :error, %ParseError{ pos: nil, message: "unexpected end of file, expecting additional class variable"} }
     end
   end
 
@@ -145,13 +149,13 @@ defmodule Jack.Lang.Parser do
                           end
                         _ -> { :error, %ParseError{pos: t1.pos, message: "unexpected token `#{t1.value}`, expecting `{`"} }
                       end
-                    _ -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting `{`"} }
+                    [] -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting `{`"} }
                   end
                 _ = error -> error
               end
           _ -> { :error, %ParseError{pos: t1.pos, message: "unexpected token `#{t1.value}`, expecting function"} }
         end
-      _ -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting function"} }
+      [] -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting function"} }
     end
   end
 
@@ -173,7 +177,7 @@ defmodule Jack.Lang.Parser do
           %Symbol{value: ")"} -> { :ok, [], rest }
           _ -> { :error, %ParseError{pos: next.pos, message: "unexpected token `#{next.value}`, expecting function parameters"}}
         end
-      _ -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting function parameters"} }
+      [] -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting function parameters"} }
     end
   end
 
@@ -191,7 +195,7 @@ defmodule Jack.Lang.Parser do
           %Symbol{value: ")"} ->
             { :ok, parameters, rest }
         end
-      _ -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting additional function parameters"} }
+      [] -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting additional function parameters"} }
     end
   end
 
@@ -205,7 +209,7 @@ defmodule Jack.Lang.Parser do
             { :ok, %FunctionParameter{type: type, name: name}, rest }
           _ -> { :error, %ParseError{pos: t1.pos, message: "unexpected token `#{t1.value}`, expecting function parameter"} }
         end
-      _ -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting function parameter"} }
+      [] -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting function parameter"} }
     end
   end
 
@@ -228,7 +232,7 @@ defmodule Jack.Lang.Parser do
           %Symbol{value: "}"} -> { :ok, Enum.reverse(body), rest }
           _ -> { :error, %ParseError{pos: next.pos, message: "unexptected token `#{next.value}`, expecting function body"} }
         end
-      _ -> { :error, %ParseError{pos: nil, message: "unexptected end of file, expecting function body"} }
+      [] -> { :error, %ParseError{pos: nil, message: "unexptected end of file, expecting function body"} }
     end
   end
 
@@ -249,7 +253,7 @@ defmodule Jack.Lang.Parser do
             end
           _ -> { :error, %ParseError{pos: next.pos, message: "unexpected token `#{next.value}`, expecting variables"} }
         end
-      _ -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting variables"} }
+      [] -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting variables"} }
     end
   end
 
@@ -260,10 +264,10 @@ defmodule Jack.Lang.Parser do
       [t1 | [t2 | [t3 | rest]]] ->
         case [t1, t2, t3] do
           [%Keyword{value: "var"}, %t{value: type}, %Identifier{value: name}] when t in [Keyword, Identifier] ->
-            { :ok, %Var{type: type, name: name}, rest }
+            { :ok, %VarDec{type: type, name: name}, rest }
           _ -> { :error, %ParseError{pos: t1.pos, message: "unexpected token `#{t1.value}`, expecting variable"} }
         end
-      _ -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting variable"} }
+      [] -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting variable"} }
     end
   end
 
@@ -281,7 +285,7 @@ defmodule Jack.Lang.Parser do
           %Symbol{value: ";"} -> { :ok, Enum.reverse(vars), rest }
           _ -> { :error, %ParseError{pos: next.pos, message: "unexpected token `#{next.value}`, expecting additional variables"} }
         end
-      _ -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting additional variables"} }
+      [] -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting additional variables"} }
     end
   end
 
@@ -292,15 +296,15 @@ defmodule Jack.Lang.Parser do
       [t1 | [t2 | rest]] ->
         case [t1, t2] do
           [%Symbol{value: ","}, %Identifier{value: name}] ->
-            { :ok, %Var{type: prev_var.type, name: name}, rest }
+            { :ok, %VarDec{type: prev_var.type, name: name}, rest }
           _ -> { :error, %ParseError{pos: t1.pos, message: "unexpected token `#{t1.value}`, expecting variable"} }
         end
-      _ -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting variable"} }
+      [] -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting variable"} }
     end
   end
 
 
-  defp parse_statement(tokens, statements \\ []) do
+  defp parse_statement(tokens) do
     inspect_tokens("statements", tokens)
     case tokens do
       [next | rest] ->
@@ -312,7 +316,7 @@ defmodule Jack.Lang.Parser do
           %Keyword{value: "return"} -> parse_return_statement(tokens)
           _ -> {:error, %ParseError{pos: next.pos, message: "unexpected token #{next.value}, expecting statement"}}
         end
-      _ -> {:error, %ParseError{pos: nil, message: "unexpected end of file, expecting statement"}}
+      [] -> {:error, %ParseError{pos: nil, message: "unexpected end of file, expecting statement"}}
     end
   end
 
@@ -320,39 +324,74 @@ defmodule Jack.Lang.Parser do
   defp parse_let_statement(tokens) do
     inspect_tokens("let_statement", tokens)
     case tokens do
-      [t1 | [t2 | [t3 | [t4 | [t5 | rest]]]]] ->
-        case [t1, t2, t3, t4, t5] do
-          [%Keyword{value: "let"}, %Identifier{value: name}, %Symbol{value: "="}, %x{} = expr, %Symbol{value: ";"}] ->
-            { :ok, %LetStatement{name: name, value: expr}, rest }
+      [t1 | [t2 | [t3 | rest]]] ->
+        case [t1, t2, t3] do
+          [%Keyword{value: "let"}, %Identifier{value: name}, %Symbol{value: "="}] ->
+            case parse_expression(rest) do
+              {:ok, expr, rest} ->
+                case rest do
+                  [%Symbol{value: ";"} | rest] ->
+                    { :ok, %LetStatement{var: name, value: expr}, rest }
+                  [t1 | rest] -> {:error, %ParseError{pos: t1.pos, message: "unexpected token #{t1.value}, expecting `;`"}}
+                end
+              _ = error -> error
+            end
+          [%Keyword{value: "let"}, %Identifier{value: name}, %Symbol{value: "["}] ->
+            case parse_expression(rest) do
+              {:ok, expr, rest} ->
+                case rest do
+                  [%Symbol{value: "]"} | [%Symbol{value: "="} | rest]] ->
+                    case parse_expression(rest) do
+                      {:ok, index, rest} ->
+                        case rest do
+                          [%Symbol{value: ";"} | rest] ->
+                            { :ok, %LetStatement{var: name, index: index, value: expr}, rest }
+                          [t1 | rest] -> {:error, %ParseError{pos: t1.pos, message: "unexpected token #{t1.value}, expecting `;`"}}
+                          [] -> {:error, %ParseError{pos: t1.pos, message: "unexpected end of file, expecting `;`"}}
+                        end
+                      _ = error -> error
+                    end
+                  [t1 | rest] -> {:error, %ParseError{pos: t1.pos, message: "unexpected token #{t1.value}, expecting `;`"}}
+                  [] -> {:error, %ParseError{pos: t1.pos, message: "unexpected end of file, expecting `;`"}}
+                end
+              _ = error -> error
+            end
           _ -> {:error, %ParseError{pos: t1.pos, message: "unexpected token #{t1.value}, expecting let statement"}}
         end
-      _ -> {:error, %ParseError{pos: nil, message: "unexpected end of file, expecting let statement"}}
+      [] -> {:error, %ParseError{pos: nil, message: "unexpected end of file, expecting let statement"}}
     end
   end
-
 
   defp parse_if_statement(tokens) do
     inspect_tokens("if_statement", tokens)
     case tokens do
-      [t1 | [t2 | [t3 | [t4 | [t5 | rest]]]]] ->
-        case [t1, t2, t3, t4, t5] do
-          [%Keyword{value: "if"}, %Symbol{value: "("}, %x{} = expr, %Symbol{value: ")"}, %Symbol{value: "{"}] ->
-            case parse_statement_body(rest) do
-              { :ok, if_body, rest } ->
-                case rest do
-                  [%Keyword{value: "else"} = t1 | [%Symbol{value: "{"} = t2 | rest]] ->
-                    case parse_statement_body(rest) do
-                      { :ok, else_body, rest } ->
-                        { :ok, %IfStatement{condition: expr, if_body: if_body, else_body: else_body}, rest }
-                      _ = error -> error
-                    end
-                  _ -> { :ok, %IfStatement{condition: expr, if_body: if_body}, rest }
-                end
-              _ = error -> error
-            end
+      [t1 | [t2 | rest]] ->
+        case [t1, t2] do
+          [%Keyword{value: "if"}, %Symbol{value: "("}] ->
+              case parse_expression(rest) do
+                {:ok, expr, rest} ->
+                  case rest do
+                    [%Symbol{value: ")"} | [%Symbol{value: "{"} | rest]] ->
+                      case parse_statement_body(rest) do
+                        { :ok, if_body, rest } ->
+                          case rest do
+                            [%Keyword{value: "else"} = t1 | [%Symbol{value: "{"} = t2 | rest]] ->
+                              case parse_statement_body(rest) do
+                                { :ok, else_body, rest } ->
+                                  { :ok, %IfStatement{condition: expr, if_body: if_body, else_body: else_body}, rest }
+                                _ = error -> error
+                              end
+                            _ -> { :ok, %IfStatement{condition: expr, if_body: if_body}, rest }
+                          end
+                        _ = error -> error
+                      end
+                    [t1 | rest] -> {:error, %ParseError{pos: t1.pos, message: "unexpected token #{t1.value}, expecting `;`"}}
+                  end
+                _ = error -> error
+              end
           _ -> {:error, %ParseError{pos: t1.pos, message: "unexpected token #{t1.value}, expecting if statement"}}
         end
-      _ -> {:error, %ParseError{pos: nil, message: "unexpected end of file, expecting if statement"}}
+      [] -> {:error, %ParseError{pos: nil, message: "unexpected end of file, expecting if statement"}}
     end
   end
 
@@ -360,16 +399,24 @@ defmodule Jack.Lang.Parser do
   defp parse_while_statement(tokens) do
     inspect_tokens("while_statement", tokens)
     case tokens do
-      [t1 | [t2 | [t3 | [t4 | [t5 | rest]]]]] ->
-        case [t1, t2, t3, t4, t5] do
-          [%Keyword{value: "while"}, %Symbol{value: "("}, %x{} = expr, %Symbol{value: ")"}, %Symbol{value: "{"}] ->
-            case parse_statement_body(rest) do
-              { :ok, body, rest } -> {:ok, %WhileStatement{condition: expr, body: body}, rest }
+      [t1 | [t2 | rest]] ->
+        case [t1, t2] do
+          [%Keyword{value: "while"}, %Symbol{value: "("}] ->
+            case parse_expression(rest) do
+              {:ok, expr, rest} ->
+                case rest do
+                  [%Symbol{value: ")"} | [%Symbol{value: "{"} | rest]] ->
+                    case parse_statement_body(rest) do
+                      { :ok, body, rest } -> {:ok, %WhileStatement{condition: expr, body: body}, rest }
+                      _ = error -> error
+                    end
+                  [t1 | rest] -> {:error, %ParseError{pos: t1.pos, message: "unexpected token #{t1.value}, expecting `;`"}}
+                end
               _ = error -> error
             end
-          _ -> {:error, %ParseError{pos: t1.pos, message: "unexpected token #{t1.value}, expecting while statement"}}
+          _ -> {:error, %ParseError{pos: t1.pos, message: "unexpected token `#{t1.value}`, expecting while statement"}}
         end
-      _ -> {:error, %ParseError{pos: nil, message: "unexpected end of file, expecting while statement"}}
+      [] -> {:error, %ParseError{pos: nil, message: "unexpected end of file, expecting while statement"}}
     end
   end
 
@@ -377,13 +424,21 @@ defmodule Jack.Lang.Parser do
   defp parse_do_statement(tokens) do
     inspect_tokens("do_statement", tokens)
     case tokens do
-      [t1 | [t2 | [t3 | rest]]] ->
-        case [t1, t2, t3] do
-          [%Keyword{value: "do"}, %x{} = expr, %Symbol{value: ";"}] ->
-            { :ok, %DoStatement{call: expr}, rest }
+      [t1 | rest] ->
+        case [t1] do
+          [%Keyword{value: "do"}] ->
+            case parse_function_call(rest) do
+              {:ok, call, rest} ->
+                case rest do
+                  [%Symbol{value: ";"} | rest] ->
+                    { :ok, %DoStatement{call: call}, rest }
+                  [t1 | rest] -> {:error, %ParseError{pos: t1.pos, message: "unexpected token #{t1.value}, expecting `;`"}}
+                end
+              _ = error -> error
+            end
           _ -> {:error, %ParseError{pos: t1.pos, message: "unexpected token #{t1.value}, expecting do statement"}}
         end
-      _ -> {:error, %ParseError{pos: nil, message: "unexpected end of file, expecting do statement"}}
+      [] -> {:error, %ParseError{pos: nil, message: "unexpected end of file, expecting do statement"}}
     end
   end
 
@@ -394,10 +449,20 @@ defmodule Jack.Lang.Parser do
       [t1 | [t2 | rest]] ->
         case [t1, t2] do
           [%Keyword{value: "return"}, %Symbol{value: ";"}] ->
-            { :ok, %ReturnStatement{}, rest }
+            { :ok, %ReturnStatement{value: nil}, rest }
+          [%Keyword{value: "return"}, _] ->
+            case parse_expression(rest) do
+              { :ok, expression, rest } ->
+                case rest do
+                  [%Symbol{value: ";"} | rest] ->
+                    { :ok, %ReturnStatement{value: expression}, rest }
+                  [t1 | rest] -> {:error, %ParseError{pos: t1.pos, message: "unexpected token `#{t1.value}`, expecting `;`"}}
+                end
+              _ = error -> error
+            end
           _ -> {:error, %ParseError{pos: t1.pos, message: "unexpected token #{t1.value}, expecting return statement"}}
         end
-      _ -> {:error, %ParseError{pos: nil, message: "unexpected end of file, expecting return statement"}}
+      [] -> {:error, %ParseError{pos: nil, message: "unexpected end of file, expecting return statement"}}
     end
   end
 
@@ -412,10 +477,120 @@ defmodule Jack.Lang.Parser do
               { :ok, statement, rest } -> parse_statement_body(rest, [statement | body])
               { :error, _ } = error -> error
             end
-          %Symbol{value: "}"} -> { :ok, Enum.reverse(body), rest }
-          _ -> { :error, %ParseError{pos: next.pos, message: "unexptected token `#{next.value}`, expecting statement body"} }
+          %Symbol{value: "}"} ->
+            { :ok, Enum.reverse(body), rest }
+          _ -> { :error, %ParseError{pos: next.pos, message: "unexpected token `#{next.value}`, expecting statement body"} }
         end
-      _ -> { :error, %ParseError{pos: nil, message: "unexptected end of file, expecting statement body"} }
+      [] -> { :error, %ParseError{pos: nil, message: "unexpected end of file, expecting statement body"} }
+    end
+  end
+
+
+  defp parse_expression_list(tokens, expressions \\ []) do
+    inspect_tokens("expression_list", tokens)
+    case tokens do
+      [%Symbol{value: ")"} | rest] -> { :ok, expressions, rest }
+      _ ->
+        case parse_expression(tokens) do
+          {:ok, expr, rest} ->
+            case rest do
+              [%Symbol{value: ","} | rest] ->
+                case parse_expression_list(rest, [expr | expressions]) do
+                  {:ok, expressions, rest} -> { :ok, [expr | expressions], rest }
+                  _ = error -> error
+                end
+              [%Symbol{value: ")"} | rest] -> { :ok, expressions, rest }
+              [] -> %ParseError{}
+            end
+          _ = error -> error
+        end
+    end
+  end
+
+
+  defp parse_expression(tokens) do
+    inspect_tokens("expression", tokens)
+    case parse_term(tokens) do
+      {:ok, term, rest} ->
+        case rest do
+          [%Symbol{value: op} | rest] when op in @binary_ops ->
+            case parse_expression(rest) do
+              {:ok, expr, rest} ->
+                {:ok, %BinaryOp{op: op, term1: term, term2: expr}, rest}
+              _ = error -> error
+            end
+          _ -> { :ok, term, rest }
+        end
+      _ = error -> error
+    end
+  end
+
+
+  defp parse_term(tokens) do
+    inspect_tokens("term", tokens)
+    case tokens do
+      [t1 | [t2 | rest]] ->
+        case [t1, t2] do
+          [%StringConstant{}, _] ->
+            {:ok, t1, [t2 | rest]}
+          [%IntegerConstant{}, _] ->
+            {:ok, t1, [t2 | rest]}
+          [%Keyword{value: val}, _] when val in @keyword_constants ->
+            {:ok, %KeywordConstant{value: val}, [t2 | rest]}
+          [%Symbol{value: "("}, _] ->
+            case parse_expression([t2 | rest]) do
+              {:ok, expr, rest} ->
+                case rest do
+                  [%Symbol{value: ")"} | rest] -> { :ok, expr, rest }
+                  [t1 | rest] -> %ParseError{pos: t1.pos, message: "unexpected token `#{t1.value}`, expecting `)`"}
+                  [] -> %ParseError{pos: t1.pos, message: "unexpected end of file, expecting `)`"}
+                end
+              _ = error -> error
+            end
+          [%Symbol{value: op}, _] when op in @unary_ops ->
+            case parse_term([t2 | rest]) do
+              {:ok, term, rest} ->
+                {:ok, %UnaryOp{op: op, term: term}, rest}
+              _ = error -> error
+            end
+          [%Identifier{value: var}, %Symbol{value: "["}] ->
+            case parse_expression(rest) do
+              {:ok, expr, rest} ->
+                case rest do
+                  [%Symbol{value: "]"} | rest] -> { :ok, %VarAccess{name: var, index: expr}, rest }
+                  [t1 | rest] -> %ParseError{pos: t1.pos, message: "unexpected token `#{t1.value}`, expecting `]`"}
+                  [] -> %ParseError{pos: t1.pos, message: "unexpected end of file, expecting `]`"}
+                end
+              _ = error -> error
+            end
+          [%Identifier{value: func}, %Symbol{value: "("}] ->
+            parse_function_call(tokens)
+          [%Identifier{value: obj}, %Symbol{value: "."}] ->
+            parse_function_call(tokens)
+          [%Identifier{value: var}, _] -> { :ok, %VarAccess{name: var}, [t2 | rest] }
+          _ -> { :error, %ParseError{pos: nil, message: "unexptected token #{t1.value}, expecting term"} }
+        end
+      [] -> { :error, %ParseError{pos: nil, message: "unexptected end of file, expecting term"} }
+    end
+  end
+
+
+  defp parse_function_call(tokens) do
+    inspect_tokens("function_call", tokens)
+    case tokens do
+      [t1 | [t2 | [t3 | [t4 | rest]]]] ->
+        case [t1, t2, t3, t4] do
+          [%Identifier{value: obj}, %Symbol{value: "."}, %Identifier{value: func}, %Symbol{value: "("}] ->
+            case parse_expression_list(rest) do
+              {:ok, args, rest} -> { :ok, %FunctionCall{obj: obj, function: func, arguments: args}, rest }
+              _ = error -> error
+            end
+          [%Identifier{value: func}, %Symbol{value: "("}, _, _] ->
+            case parse_expression_list([t3 | [t4 | rest]]) do
+              {:ok, args, rest} -> { :ok, %FunctionCall{function: func, arguments: args}, rest }
+              _ = error -> error
+            end
+        end
     end
   end
 

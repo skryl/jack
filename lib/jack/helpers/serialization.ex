@@ -1,10 +1,13 @@
 defmodule Jack.Helpers.Serialization do
+  alias Jack.Lang.Tokens.{Keyword, Identifier, Symbol, StringConstant, IntegerConstant}
 
-  def to_xml(tokens, opts \\ []) when is_list(tokens) do
+  @tokens [Keyword, Identifier, Symbol, StringConstant, IntegerConstant]
+
+  def to_xml(elements, opts \\ []) do
     output = opts[:token_dump]
 
     if output do
-      xml_tokens = Enum.map(tokens, &token_to_xml/1) |> Enum.join("\n")
+      xml_tokens = Enum.map(elements, &element_to_xml/1) |> Enum.join("\n")
       xml_dump = "<tokens>\n#{xml_tokens}\n</tokens>"
 
       File.write!(output, xml_dump)
@@ -14,9 +17,20 @@ defmodule Jack.Helpers.Serialization do
   end
 
 
-  defp token_to_xml(%{ value: val, __struct__: struct } = token) when is_map(token) do
-    type = to_type(struct)
+  defp element_to_xml(%x{ value: val } = token) when x in @tokens do
+    type = to_type(x)
     "<#{type}> #{sanitize(val)} </#{type}>"
+  end
+
+
+  defp element_to_xml(%x{} = element) when x not in @tokens do
+    type = to_type(x)
+
+    """
+    <#{type}>
+      #{values}
+    </#{type}>
+    """
   end
 
 
