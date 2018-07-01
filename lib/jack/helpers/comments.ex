@@ -1,7 +1,7 @@
 defmodule Jack.Helpers.Comments do
 
   @line_comment ~r/\/\/.*/
-  @doc_comment  ~r/\/\*\*.*\*\//m
+  @doc_comment  ~r/\/\*\*.*?\*\//ms
 
 
   # remove comments and empty lines
@@ -24,7 +24,7 @@ defmodule Jack.Helpers.Comments do
 
 
   defp remove_emptylines(lines) do
-    for line <- lines, String.length(line) > 0, do: line |> String.trim
+    for line <- lines, (line |> String.trim |> String.length > 0), do: line |> String.trim
   end
 
 end

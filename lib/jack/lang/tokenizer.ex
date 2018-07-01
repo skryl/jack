@@ -3,7 +3,9 @@ defmodule Jack.Lang.Tokenizer do
   alias Jack.Helpers.Serialization
   alias Jack.Lang.Tokens.{Keyword, Identifier, Symbol, IntegerConstant, StringConstant}
 
-  @symbols  ~w{{ \} ( ) [ ] . , ; + - * / & | < > = ~]}
+  import Jack.Helpers.Logging
+
+  @symbols  ~w{{ \} ( ) [ ] . , ; + - * / & | < > = ~ ]}
   @keywords ~w{ class constructor function method field static var int char
                 boolean void true false null this let do if else while return }
 
@@ -17,6 +19,7 @@ defmodule Jack.Lang.Tokenizer do
   def tokenize(code) do
     code
       |> Comments.clean
+      |> log
       |> tokenize_lines
   end
 
