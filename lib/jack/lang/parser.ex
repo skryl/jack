@@ -601,9 +601,11 @@ defmodule Jack.Lang.Parser do
 
 
   defp inspect_tokens(name, tokens) do
-    IO.puts name
-    IO.puts Enum.map(tokens, &(&1.value)) |> Enum.join(", ")
-    IO.puts "\n"
+    if Logger.level == :debug do
+      IO.puts name
+      IO.puts Enum.map(tokens, &(&1.value)) |> Enum.join(", ")
+      IO.puts "\n"
+    end
   end
 
 end

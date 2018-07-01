@@ -12,7 +12,7 @@ since the cpu emulator understands both assembly code and machine code.
 
 ### Compiling Jack source code to Jack VM code
 
-To compile a directory containing *.jack classes
+To compile a directory containing `*.jack` classes
 
 ``` bash
 jack myProgram/
@@ -38,7 +38,7 @@ jack -v -a Main.xml myProgram/Main.jack
 
 ### Translating Jack VM code to Hack assembly
 
-To compile a directory containing *.vm files
+To compile a directory containing `*.vm` files
 
 ```bash
 jack -o examples/FibonacciElement
