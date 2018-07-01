@@ -23,8 +23,8 @@ defmodule Jack.CLI do
                   token_dump: :string],
       aliases:  [ h: :help,
                   v: :verbose,
-                  m: :vm,
-                  o: :output,
+                  o: :vm,
+                  f: :output,
                   a: :ast_dump,
                   t: :token_dump ])
 
