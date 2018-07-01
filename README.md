@@ -1,38 +1,62 @@
 # Jack Compiler
 
-Jack is a toy java-like object oriented language as presented in Nand2Tetris.
-This project is a 2 stage compiler written for the Jack language.
+Jack is a toy, java-like, object oriented language as presented in Nand2Tetris.
+This project is a 2 stage compiler written for the Jack language. The compiler
+generates code for a stack-based virtual machine, then translates it to Hack
+assembly language which can be executed on the Nand2Tetris CPU emulator.
 
 ## Usage
 
 ### Compiling Jack source code to Jack VM code
 
-TODO
+To compile a directory containing *.jack classes
+
+``` bash
+jack myProgram/
+```
+
+To compile a jack source file
+
+``` bash
+jack myProgram/Main.jack
+```
+
+To dump the token list produced by the parser
+
+``` bash
+jack -v -t MainT.xml myProgram/Main.jack
+```
+
+To dump the AST produced by the parser
+
+``` bash
+jack -v -a Main.xml myProgram/Main.jack
+```
 
 ### Compiling Jack VM code to Hack assembly
 
 To compile a directory containing *.vm files
 
 ```bash
-jack examples/FibonacciElement
+jack -m examples/FibonacciElement
 ```
 
 To compile a single *.vm file
 
 ```bash
-jack examples/BasicLoop/BasicLoop.vm
+jack -m examples/BasicLoop/BasicLoop.vm
 ```
 
 To specify the output filename
 
 ```bash
-jack -o fib.asm examples/FibonacciElement
+jack -m -o fib.asm examples/FibonacciElement
 ```
 
 To dump debug info to STDOUT
 
 ```bash
-jack -v -o fib.asm examples/FibonacciElement
+jack -m -v -o fib.asm examples/FibonacciElement
 ```
 
 ### Assembling Hack assembly to machine code
