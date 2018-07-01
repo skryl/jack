@@ -25,5 +25,6 @@ jack-*.tar
 # Ignore binary
 /jack
 
-# Ignore jack source files
+# Ignore jack source / test files
 *.jack
+*.xml

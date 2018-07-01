@@ -8,6 +8,7 @@ defmodule Jack.Lang.Parser do
   @keyword_constants ~w(true false null this)
   @statement_types ~w{let if while do return}
   @class_variable_scopes ~w{field static}
+  @function_scopes ~w{function constructor method}
   @unary_ops  ~w{- ~}
   @binary_ops ~w{+ - * / & | < > =}
 
@@ -52,7 +53,7 @@ defmodule Jack.Lang.Parser do
               { :ok, vars, rest } -> parse_class_body(rest, vars ++ body)
               _ = error -> error
             end
-          %Keyword{value: "function"} ->
+          %Keyword{value: scope} when scope in @function_scopes ->
             case parse_function(tokens) do
               { :ok, func, rest } -> parse_class_body(rest, [func | body])
               _ = error -> error
@@ -451,7 +452,7 @@ defmodule Jack.Lang.Parser do
           [%Keyword{value: "return"}, %Symbol{value: ";"}] ->
             { :ok, %ReturnStatement{value: nil}, rest }
           [%Keyword{value: "return"}, _] ->
-            case parse_expression(rest) do
+            case parse_expression([t2 | rest]) do
               { :ok, expression, rest } ->
                 case rest do
                   [%Symbol{value: ";"} | rest] ->
@@ -536,7 +537,7 @@ defmodule Jack.Lang.Parser do
           [%IntegerConstant{}, _] ->
             {:ok, t1, [t2 | rest]}
           [%Keyword{value: val}, _] when val in @keyword_constants ->
-            {:ok, %KeywordConstant{value: val}, [t2 | rest]}
+            {:ok, %KeywordConstant{name: val}, [t2 | rest]}
           [%Symbol{value: "("}, _] ->
             case parse_expression([t2 | rest]) do
               {:ok, expr, rest} ->
@@ -567,7 +568,8 @@ defmodule Jack.Lang.Parser do
             parse_function_call(tokens)
           [%Identifier{value: obj}, %Symbol{value: "."}] ->
             parse_function_call(tokens)
-          [%Identifier{value: var}, _] -> { :ok, %VarAccess{name: var}, [t2 | rest] }
+          [%Identifier{value: var}, _] ->
+            { :ok, %VarAccess{name: var}, [t2 | rest] }
           _ -> { :error, %ParseError{pos: nil, message: "unexptected token #{t1.value}, expecting term"} }
         end
       [] -> { :error, %ParseError{pos: nil, message: "unexptected end of file, expecting term"} }

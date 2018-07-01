@@ -1,3 +1,3 @@
 defmodule Jack.Lang.Grammar.KeywordConstant do
-  defstruct value: nil
+  defstruct name: nil
 end
