@@ -3,9 +3,9 @@
 Jack is a toy, java-like, object oriented language as presented in [Nand2Tetris](https://www.nand2tetris.org).
 This project is a 2 stage compiler written for the Jack language. The compiler
 generates code for a stack-based virtual machine, then translates it to Hack
-assembly language which can be executed on the Nand2Tetris [CPU emulator](https://www.nand2tetris.org/software).
+assembly which can be executed on the Nand2Tetris [CPU emulator](https://www.nand2tetris.org/software).
 
-An assembler is also included for completeness but is not strictly necessary
+A Hack assembler is also included for completeness but is not strictly necessary
 since the cpu emulator understands both assembly code and machine code.
 
 ## Usage
