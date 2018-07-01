@@ -16,7 +16,7 @@ defmodule Jack.Lang do
            |> Serialization.to_xml(opts)
            |> Parser.parse(class)
            |> log
-          #  |> Serialization.to_xml(opts)
+           |> Serialization.to_xml(opts)
     end
   end
 

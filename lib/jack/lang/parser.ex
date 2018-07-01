@@ -431,7 +431,7 @@ defmodule Jack.Lang.Parser do
               {:ok, call, rest} ->
                 case rest do
                   [%Symbol{value: ";"} | rest] ->
-                    { :ok, %DoStatement{call: call}, rest }
+                    { :ok, %DoStatement{body: call}, rest }
                   [t1 | rest] -> {:error, %ParseError{pos: t1.pos, message: "unexpected token #{t1.value}, expecting `;`"}}
                 end
               _ = error -> error
@@ -500,7 +500,7 @@ defmodule Jack.Lang.Parser do
                   _ = error -> error
                 end
               [%Symbol{value: ")"} | rest] -> { :ok, expressions, rest }
-              [] -> %ParseError{}
+              [] -> %ParseError{pos: nil, message: "unexpected end of file, expecting expression list"}
             end
           _ = error -> error
         end
@@ -596,7 +596,7 @@ defmodule Jack.Lang.Parser do
 
 
   defp check_class_name(name, id_name) do
-    if name == id_name, do: {:ok, name}, else: { :error, %ParseError{} }
+    if name == id_name, do: {:ok, name}, else: { :error, %ParseError{message: "class name does not match file name"} }
   end
 
 
